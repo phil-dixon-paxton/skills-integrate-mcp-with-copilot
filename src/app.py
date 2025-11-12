@@ -5,9 +5,9 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 import os
 from pathlib import Path
 
@@ -15,9 +15,21 @@ app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
 
 # Mount the static files directory
+# Mount the static files directory
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
+
+
+# Custom 404 error handler
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    not_found_path = os.path.join(current_dir, "static", "404.html")
+    if os.path.exists(not_found_path):
+        with open(not_found_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content, status_code=404)
+    return HTMLResponse(content="<h1>404 Not Found</h1>", status_code=404)
 
 # In-memory activity database
 activities = {
